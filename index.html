@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MailBlast — N8N Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0b0f1a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+
+    .container { max-width: 860px; margin: auto; }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h1 span { color: #3b82f6; }
+
+    .card {
+      background: #151d2e;
+      border: 1px solid #1e2d45;
+      border-radius: 12px;
+      padding: 22px 24px;
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+
+    /* ── Form ── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 12px; color: #94a3b8; }
+    .field input, .field textarea {
+      background: #0d1526;
+      border: 1px solid #1e2d45;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 13px;
+      color: #e2e8f0;
+      font-family: inherit;
+      outline: none;
+      transition: border 0.15s;
+    }
+    .field input:focus, .field textarea:focus { border-color: #3b82f6; }
+    .field textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+
+    /* ── File Upload ── */
+    .upload-area {
+      border: 2px dashed #1e2d45;
+      border-radius: 10px;
+      padding: 22px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-area:hover { border-color: #3b82f6; background: rgba(59,130,246,0.05); }
+    .upload-area input { display: none; }
+    .upload-icon { font-size: 28px; margin-bottom: 8px; }
+    .upload-text { font-size: 13px; color: #64748b; }
+    .upload-text span { color: #3b82f6; cursor: pointer; }
+
+    /* ── Email List ── */
+    .email-list {
+      max-height: 150px;
+      overflow-y: auto;
+      background: #0d1526;
+      border: 1px solid #1e2d45;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 12px;
+    }
+    .email-list::-webkit-scrollbar { width: 4px; }
+    .email-list::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 2px; }
+    .email-item {
+      font-size: 12px;
+      padding: 5px 0;
+      border-bottom: 1px solid #1a2540;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .email-item:last-child { border-bottom: none; }
+    .email-item::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+    }
+    .email-item.invalid::before { background: #ef4444; }
+
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .stat-box {
+      background: #0d1526;
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-label { font-size: 11px; color: #64748b; margin-bottom: 6px; }
+    .stat-val { font-size: 24px; font-weight: 600; }
+    .stat-val.blue { color: #3b82f6; }
+    .stat-val.green { color: #22c55e; }
+    .stat-val.red { color: #ef4444; }
+    .stat-val.amber { color: #f59e0b; }
+
+    /* ── Progress ── */
+    .progress-wrap { margin-top: 14px; }
+    .progress-header { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 6px; }
+    .progress-bar { height: 8px; background: #1e2d45; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; background: #22c55e; width: 0%; }
+
+    /* ── Log ── */
+    .log-box {
+      background: #080d18;
+      border: 1px solid #1e2d45;
+      border-radius: 8px;
+      padding: 12px 14px;
+      max-height: 160px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .log-box::-webkit-scrollbar { width: 4px; }
+    .log-box::-webkit-scrollbar-thumb { background: #1e2d45; }
+    .log-ok { color: #22c55e; }
+    .log-err { color: #ef4444; }
+    .log-info { color: #3b82f6; }
+    .log-warn { color: #f59e0b; }
+    .log-dim { color: #334155; }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 10px; margin-top: 14px; }
+    .btn {
+      padding: 11px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+      flex: 2;
+      box-shadow: 0 0 20px rgba(59,130,246,0.3);
+    }
+    .btn-primary:hover { background: #2563eb; box-shadow: 0 0 28px rgba(59,130,246,0.5); }
+    .btn-primary:disabled { background: #1e3a6e; box-shadow: none; cursor: not-allowed; }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #1e2d45;
+      color: #94a3b8;
+      flex: 1;
+    }
+    .btn-secondary:hover { border-color: #3b82f6; color: #e2e8f0; }
+
+    /* ── Webhook Status ── */
+    .webhook-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0d1526;
+      border: 1px solid #1e2d45;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; animation: blink 2s infinite; flex-shrink: 0; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .webhook-url { font-size: 12px; color: #64748b; font-family: monospace; word-break: break-all; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-green { background: rgba(34,197,94,0.1); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+    .badge-red   { background: rgba(239,68,68,0.1);  color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+
+    .sending-note {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>✉ Mail<span>Blast</span> — N8N Dashboard</h1>
+
+  <!-- ── Webhook Status ── -->
+  <div class="card">
+    <div class="card-title">N8N Connection</div>
+    <div class="webhook-row">
+      <div class="dot"></div>
+      <div class="webhook-url">https://manmeet-234.app.n8n.cloud/webhook/72f02ae1-5b1e-422e-80fa-f5129782cb8b</div>
+      <span class="status-badge badge-green">● Connected</span>
+    </div>
+    <div style="font-size:12px;color:#64748b;">
+      ⚡ N8N workflow active hona chahiye — n8n.cloud pe workflow <strong style="color:#22c55e;">ON</strong> rakho.
+    </div>
+  </div>
+
+  <!-- ── Email Content ── -->
+  <div class="card">
+    <div class="card-title">Email Content</div>
+    <div class="form-row">
+      <div class="field">
+        <label>Sender Name</label>
+        <input type="text" id="senderName" placeholder="Manmeet Singh" value="Manmeet from IIT" />
+      </div>
+      <div class="field">
+        <label>Subject Line</label>
+        <input type="text" id="subject" placeholder="Exciting News!" value="Message from Manmeet — IIT 🚀" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Email Message Body</label>
+      <textarea id="message" placeholder="Your email message here...">Hello,
+
+I am Manmeet from IIT 🚀
+
+[Your message here]
+
+Best regards,
+Manmeet</textarea>
+    </div>
+  </div>
+
+  <!-- ── Upload CSV ── -->
+  <div class="card">
+    <div class="card-title">Load Email List</div>
+
+    <div class="upload-area" onclick="document.getElementById('csvFile').click()">
+      <input type="file" id="csvFile" accept=".csv,.txt" onchange="loadCSV(event)" />
+      <div class="upload-icon">📄</div>
+      <div class="upload-text">Click to upload <span>CSV file</span></div>
+      <div class="upload-text" style="margin-top:4px;font-size:11px;">CSV mein email column hona chahiye (col 1 ya col 2)</div>
+    </div>
+
+    <div id="emailListWrap" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;margin-bottom:6px;">
+        <span style="font-size:12px;color:#94a3b8;" id="listSummary"></span>
+        <span style="font-size:11px;color:#3b82f6;cursor:pointer;" onclick="clearList()">Clear ✕</span>
+      </div>
+      <div class="email-list" id="emailList"></div>
+    </div>
+  </div>
+
+  <!-- ── Stats + Progress ── -->
+  <div class="card">
+    <div class="card-title">Live Stats</div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Total</div>
+        <div class="stat-val blue" id="statTotal">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Sent ✓</div>
+        <div class="stat-val green" id="statSuccess">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Failed ✗</div>
+        <div class="stat-val red" id="statFailed">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Remaining</div>
+        <div class="stat-val amber" id="statRemaining">0</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span>Progress</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Log + Send ── -->
+  <div class="card">
+    <div class="card-title">Live Log</div>
+    <div class="log-box" id="liveLog">
+      <div class="log-dim">[system] Ready. CSV load karo aur Send dabao.</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="clearLog()">Clear Log</button>
+      <button class="btn btn-primary" id="sendBtn" onclick="sendEmails()">🚀 Send All Emails via N8N</button>
+    </div>
+    <div class="sending-note" id="sendNote"></div>
+  </div>
+
+</div>
+
+<script>
+  // ─── CONFIG ───
+  var N8N_WEBHOOK = "https://manmeet-234.app.n8n.cloud/webhook/72f02ae1-5b1e-422e-80fa-f5129782cb8b";
+  var DELAY_MS    = 500; // delay between each email (ms) — spam se bachne ke liye
+
+  // ─── State ───
+  var emails = [];
+  var successCount = 0;
+  var failedCount  = 0;
+  var isSending    = false;
+
+  // ─── Load CSV ───
+  function loadCSV(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var lines = e.target.result.split("\n");
+      emails = [];
+      var listHTML = "";
+      var invalidCount = 0;
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line) continue;
+
+        var cols = line.split(",");
+        var email = "";
+
+        // Try col index 0 and 1
+        for (var c = 0; c < Math.min(cols.length, 3); c++) {
+          var val = cols[c].trim().replace(/"/g, "");
+          if (isValidEmail(val)) { email = val; break; }
+        }
+
+        if (email) {
+          emails.push(email);
+          listHTML += '<div class="email-item">' + email + '</div>';
+        } else if (line.includes("@")) {
+          // maybe header row or invalid
+          invalidCount++;
+          listHTML += '<div class="email-item invalid">' + line.slice(0,40) + ' (invalid)</div>';
+        }
+      }
+
+      document.getElementById("emailList").innerHTML = listHTML || '<div class="log-dim">No valid emails found</div>';
+      document.getElementById("emailListWrap").style.display = "block";
+      document.getElementById("listSummary").textContent = emails.length + " valid emails loaded" + (invalidCount ? ", " + invalidCount + " skipped" : "");
+      updateStats();
+      log("info", "[ CSV ] " + emails.length + " emails loaded from \"" + file.name + "\"");
+    };
+    reader.readAsText(file);
+  }
+
+  function clearList() {
+    emails = [];
+    document.getElementById("emailListWrap").style.display = "none";
+    document.getElementById("csvFile").value = "";
+    updateStats();
+    log("warn", "[ List ] Email list cleared.");
+  }
+
+  // ─── Email Validation ───
+  function isValidEmail(e) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  }
+
+  // ─── Update Stats ───
+  function updateStats() {
+    var remaining = emails.length - successCount - failedCount;
+    document.getElementById("statTotal").textContent     = emails.length;
+    document.getElementById("statSuccess").textContent   = successCount;
+    document.getElementById("statFailed").textContent    = failedCount;
+    document.getElementById("statRemaining").textContent = remaining < 0 ? 0 : remaining;
+  }
+
+  function updateProgress(current, total) {
+    var pct = total > 0 ? Math.round((current / total) * 100) : 0;
+    document.getElementById("progressFill").style.width = pct + "%";
+    document.getElementById("progressPct").textContent  = pct + "%";
+  }
+
+  // ─── Log ───
+  function log(type, msg) {
+    var box = document.getElementById("liveLog");
+    var el  = document.createElement("div");
+    el.className = "log-" + type;
+    var t = new Date().toLocaleTimeString("en-IN", { hour12: false });
+    el.textContent = "[" + t + "] " + msg;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function clearLog() {
+    document.getElementById("liveLog").innerHTML = '<div class="log-dim">[system] Log cleared.</div>';
+  }
+
+  // ─── Sleep helper ───
+  function sleep(ms) {
+    return new Promise(function(resolve) { setTimeout(resolve, ms); });
+  }
+
+  // ─── MAIN SEND FUNCTION ───
+  async function sendEmails() {
+    if (isSending) { log("warn", "[ Wait ] Already sending..."); return; }
+    if (!emails.length) { log("err", "[ Error ] Pehle CSV load karo!"); return; }
+
+    var subject = document.getElementById("subject").value.trim()    || "Hello!";
+    var message = document.getElementById("message").value.trim()    || "Hello from MailBlast!";
+    var sender  = document.getElementById("senderName").value.trim() || "Manmeet";
+
+    isSending    = true;
+    successCount = 0;
+    failedCount  = 0;
+    updateStats();
+    updateProgress(0, emails.length);
+
+    document.getElementById("sendBtn").disabled  = true;
+    document.getElementById("sendBtn").textContent = "⏳ Sending...";
+    document.getElementById("sendNote").textContent = "Sending " + emails.length + " emails — please wait, do not close this tab.";
+
+    log("info", "[ Start ] Sending to " + emails.length + " emails via N8N...");
+
+    for (var i = 0; i < emails.length; i++) {
+      var email = emails[i];
+
+      try {
+        var res = await fetch(N8N_WEBHOOK, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to:      email,
+            subject: subject,
+            message: message,
+            name:    sender,
+            index:   i + 1,
+            total:   emails.length
+          })
+        });
+
+        if (res.ok) {
+          successCount++;
+          log("ok", "[ " + (i+1) + "/" + emails.length + " ] ✓ Sent → " + email);
+        } else {
+          failedCount++;
+          log("err", "[ " + (i+1) + "/" + emails.length + " ] ✗ Failed → " + email + " (HTTP " + res.status + ")");
+        }
+
+      } catch (err) {
+        failedCount++;
+        log("err", "[ " + (i+1) + "/" + emails.length + " ] ✗ Error → " + email + " (" + err.message + ")");
+      }
+
+      updateStats();
+      updateProgress(i + 1, emails.length);
+
+      // Delay between emails — spam prevention
+      if (i < emails.length - 1) await sleep(DELAY_MS);
+    }
+
+    // ─── Done ───
+    isSending = false;
+    document.getElementById("sendBtn").disabled   = false;
+    document.getElementById("sendBtn").textContent = "🚀 Send All Emails via N8N";
+    document.getElementById("sendNote").textContent = "";
+
+    log("ok", "[ ✓ Done ] " + successCount + " sent, " + failedCount + " failed out of " + emails.length + " total.");
+
+    if (failedCount === 0) {
+      log("ok", "[ 🎉 ] Sab emails successfully send ho gaye!");
+    } else {
+      log("warn", "[ ! ] " + failedCount + " emails fail hue — N8N logs check karo.");
+    }
+  }
+</script>
+</body>
+</html>
